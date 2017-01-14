@@ -1,21 +1,31 @@
-///
-/// @file main.c
-/// @brief This is a pacman game:
-/// The module draws the maze with pills and powerpills. It draws the pacman too.
-/// The pacman moves (and is animated) where it should move and it teleports from one side to another.
-/// It eats the (power) pills.
+/// \file main.c
+/// \brief This is the assignment "Programming project 1"
+/// This is the source code for a very basic Pacman game:
+///     The code draws the maze(the maze has been changed) and pacman(animated) and the (power)pills.
+///     It makes sure that pacman does move(prediction) where it should.
+///     When pacman eats the pills it dissapears.
+///     For Mac version: I have added some sound effects with SDL_mixer
+///     For Linux version: I have added a sound effect but could not use SDL_mixer so I used the ASCII "Beep"-alerm sound
+/// NOTE: I have uploaded two codes: A Mac version and a Linux version
+/// \author Begin code: Jon Macey
+/// \author Completed the code: Moira Shooter
+/// \version unkown
+/// \date 14/01/2017 Finish the code by commenting and tyding
 
 #include <SDL.h>
 #include <SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_mixer.h>
 
 // include the map for the maze.
 #include "map.h"
 
 // the size of the block to draw
 const int BLOCKSIZE=25;
+// // each sprite is 22 x 20 so set the width and height
+const int widthPacman=22;
+const int heightPacman=20;
 
 // the width of the screen taking into account the maze and block
 #define WIDTH COLS*BLOCKSIZE
@@ -23,14 +33,15 @@ const int BLOCKSIZE=25;
 // the height of the screen taking into account the maze and block
 #define HEIGHT ROWS*BLOCKSIZE
 
-// an enumeration for direction to move USE more enums!
+// an enumeration for direction to move
 enum DIRECTION{LEFT,RIGHT,UP,DOWN,NONE};
 
 
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief function that draws the maze
+/// @brief function that draws the maze: it checks each value of the maze.
+///        Depending on the value there is a different color.
 /// @param[in]  ren the renderer
-/// @param[in]  block the pointer of creating a SDL_rect
+/// @param[in]  block the pointer of creating a SDL_rect block
 //----------------------------------------------------------------------------------------------------------------------
 void drawMaze(SDL_Renderer* ren, SDL_Rect* block)
 {
@@ -92,7 +103,7 @@ void drawMaze(SDL_Renderer* ren, SDL_Rect* block)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief drawing pacman onto the screen; animation is included
+/// @brief drawing pacman onto the screen; animation included
 /// @param[in]  ren the renderer
 /// @param[in]  tex the texturer
 /// @param[in]  block the pointer of creating a SDL_rect
@@ -107,9 +118,9 @@ void drawPacman(SDL_Renderer* ren,SDL_Texture* tex, SDL_Rect* block, SDL_Rect* p
     block->y=posPacy;
     block->h=BLOCKSIZE;
     block->w=BLOCKSIZE;
-    // each sprite is 22 x 20 so set the width and height
-    pacman->w=22;
-    pacman->h=20;
+
+    pacman->w=widthPacman;
+    pacman->h=heightPacman;
 
     /// The following section is from:-
     /// Bilal Cheema. Game Development with SDL2 Part 4: Animating using Sprite Sheets [online].
@@ -119,7 +130,7 @@ void drawPacman(SDL_Renderer* ren,SDL_Texture* tex, SDL_Rect* block, SDL_Rect* p
         int totalFrames=7;
 
         // amount of delay in milliseconds for each frame
-        int delayPerFrame=50;
+        int delayPerFrame=40;
 
         // SDL_GetTicks() method gives us the time in milliseconds
         // 'frame' will give us the index of frame we want to render
@@ -130,7 +141,7 @@ void drawPacman(SDL_Renderer* ren,SDL_Texture* tex, SDL_Rect* block, SDL_Rect* p
         // This will guve us the appropriate frame dimenstions from the sprite sheet
         pacman->y=pacman->h*frame;
    /// end of Citation
-   ///
+
     pacman->x=(*direction)*pacman->w;
     // finally draw using the SDL_RenderCopy function
     // this takes the texture and copies the portion from the rect
@@ -138,7 +149,7 @@ void drawPacman(SDL_Renderer* ren,SDL_Texture* tex, SDL_Rect* block, SDL_Rect* p
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief makes the pacman move to any direction
+/// @brief makes the pacman move to any direction, depending which key is pressed.
 /// @param[in]  posPacx the pointer for position x for pacman
 /// @param[in]  posPacy the pointer for position y for pacman
 /// @param[in]  direction the direction of pacman
@@ -155,14 +166,14 @@ void movePacman(int *posPacx, int *posPacy, int direction)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief it looks if there is a wall or not
+/// @brief it checks if there is no wall by returning true or false
 /// @param[in]  direction the direction of pacman
 /// @param[in]  posPacx the position x of pacman
 /// @param[in]  posPacy the position y of pacman
 //----------------------------------------------------------------------------------------------------------------------
 int isNoWall(int direction, int posPacx, int posPacy)
 {
-    int space=(BLOCKSIZE-2)/2;
+    int spaceAHead=(BLOCKSIZE-2)/2;
     switch( direction )
     {
         case UP:    { posPacy-=2;  break; }
@@ -172,34 +183,40 @@ int isNoWall(int direction, int posPacx, int posPacy)
 
     }
 
-    //corners of pacman
-    int a=(int)(round((posPacx+space)/(float)BLOCKSIZE));
-    int b=(int)(round((posPacy+space)/(float)BLOCKSIZE));
-    int c=(int)(round((posPacx+space)/(float)BLOCKSIZE));
-    int d=(int)(round((posPacy-space)/(float)BLOCKSIZE));
-    int e=(int)(round((posPacx-space)/(float)BLOCKSIZE));
-    int f=(int)(round((posPacy-space)/(float)BLOCKSIZE));
-    int g=(int)(round((posPacx-space)/(float)BLOCKSIZE));
-    int h=(int)(round((posPacy+space)/(float)BLOCKSIZE));
-    int valueRightDownCorner=map[b][a];
-    int valueRightUpCorner=map[d][c];
-    int valueLeftUpCorner=map[f][e];
-    int valueLeftDownCorner=map[h][g];
+    // coordinate system of computer graphics begins at top left! yNegative is therefor closer to the top-left corner.
+    int xPositive=(int)(round((posPacx+spaceAHead)/(float)BLOCKSIZE));
+    int yPositive=(int)(round((posPacy+spaceAHead)/(float)BLOCKSIZE));
+    int yNegative=(int)(round((posPacy-spaceAHead)/(float)BLOCKSIZE));
+    int xNegative=(int)(round((posPacx-spaceAHead)/(float)BLOCKSIZE));
+    // corners of the block(pacman)
+    int valueRightDownCornerPacman=map[yPositive][xPositive];
+    int valueRightUpCornerPacman=map[yNegative][xPositive];
+    int valueLeftUpCornerPacman=map[yNegative][xNegative];
+    int valueLeftDownCornerPacman=map[yPositive][xNegative];
 
-    if(valueRightDownCorner==1 || valueRightUpCorner==1 || valueLeftUpCorner==1 || valueLeftDownCorner==1 || valueRightDownCorner==4)
+    if( valueRightDownCornerPacman==1    ||
+        valueRightUpCornerPacman==1  ||
+        valueLeftUpCornerPacman==1   ||
+        valueLeftDownCornerPacman==1 ||
+        valueRightDownCornerPacman==4 )
+    {
         return 0;
+    }
     else
+    {
         return 1;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-/// @brief When pacman eats a pill the pill dissapears
+/// @brief When pacman eats a pill the pill dissapears; it checks if there is a pill(value=2) if so replace it with 0 (No Pill)
+///        Sound effects have been added here. Linux version: Printf() Mac version: Mix_PlayChannel()
 /// @param[in]  posPacx the pointer to pacmans x position
 /// @param[in]  posPacy the pointer to pacmans y position
 /// @param[in]  pacmanChomp the sound of pacman when eats pill
 /// @param[in]  pacmanPowerPill the sound of pacman when eats powerpill
 //----------------------------------------------------------------------------------------------------------------------
-void clearRedPill(int *posPacx, int *posPacy/*, Mix_Chunk* pacmanChomp, Mix_Chunk* pacmanPowerPill*/)
+void clearRedPill(int *posPacx, int *posPacy, Mix_Chunk* pacmanChomp, Mix_Chunk* pacmanPowerPill)
 {
     int a=round((*posPacx)/(float)BLOCKSIZE);
     int b=round((*posPacy)/(float)BLOCKSIZE);
@@ -207,7 +224,7 @@ void clearRedPill(int *posPacx, int *posPacy/*, Mix_Chunk* pacmanChomp, Mix_Chun
     if(map[b][a]==2)
     {
         map[b][a]=0;
-        //Mix_PlayChannel(-1, pacmanChomp, 0); //MAC VERSION
+        Mix_PlayChannel(-1, pacmanChomp, 0); //MAC VERSION
         // sound for LINUX
         printf("\a\n");
 
@@ -216,7 +233,7 @@ void clearRedPill(int *posPacx, int *posPacy/*, Mix_Chunk* pacmanChomp, Mix_Chun
     {
         map[b][a]=0;
         printf("\a\n");
-        //Mix_PlayChannel(-1, pacmanPowerPill,0); //MAC VERSION
+        Mix_PlayChannel(-1, pacmanPowerPill,0); //MAC VERSION
     }
 }
 
@@ -282,7 +299,8 @@ int main()
   SDL_FreeSurface(image);
 
 
-  /*MAC VERSION FOR SOUND
+
+  /// MAC version
   /// the following section is from:-
   /// Mr. Foo, 2014. Sound Effects and Music [onine]. Second Paragraph, fourth and fifth paragraph
   /// Available from: http://lazyfoo.net/tutorials/SDL/21_sound_effects_and_music/index.php [Accessed January 2 2017]
@@ -292,7 +310,7 @@ int main()
    Mix_Chunk *pacmanPowerPill = NULL;
 
    // initialise SDL_mixer
-   if(Mix_OpenAudio(8000, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
+   if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
    {
        printf("SDL_mixer could not initialize SDL_mixer error: %s\n", Mix_GetError());
        return EXIT_FAILURE;
@@ -307,7 +325,7 @@ int main()
        return EXIT_FAILURE;
    }
    /// end of Citation
-    */
+
 
   // structure of different directions
   struct directions
@@ -403,7 +421,7 @@ int main()
     }
 
   // clears the pills when it is eaten
-  clearRedPill(&posPacman.x, &posPacman.y/*, pacmanChomp, pacmanPowerPill*/);
+  clearRedPill(&posPacman.x, &posPacman.y, pacmanChomp, pacmanPowerPill);
 
   // pacmans teleportation from one side to the other
   teleportPacman(&posPacman.x);
@@ -413,7 +431,8 @@ int main()
   SDL_RenderPresent(ren);
   }
 
- /* //Free the sound effect
+  //Mac version
+  //Free the sound effect
   Mix_FreeChunk(pacmanPowerPill);
   pacmanPowerPill = NULL;
   Mix_FreeChunk(pacmanChomp);
@@ -422,7 +441,7 @@ int main()
   //Quit SDL_mixer
   Mix_Quit();
 
-*/
+
   //Quit SDL
   SDL_Quit();
   return EXIT_SUCCESS;

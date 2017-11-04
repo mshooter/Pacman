@@ -1,7 +1,7 @@
 # Pacman
 ## project
 This is the simple pacman game Assignment for Bournemouth University.
-I received a basis code and from there we had to continue to code.
+I received a basis code and from there I had to continue to implement.
 I am using a SDL 2.0 library to use the map data and sprite sheets presented with this assignment.
 The project is based upon using this basic framework and extending it to complete the tasks below:
 1. Using the supplied map array in map.h implement code to draw blocks for each of the data values in the array.
